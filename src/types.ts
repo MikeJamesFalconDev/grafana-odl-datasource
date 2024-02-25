@@ -1,4 +1,4 @@
-import { DataSourceJsonData, SelectableValue } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 export interface ColumnType {

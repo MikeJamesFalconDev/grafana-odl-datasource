@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { Button, Card, InlineField, Input, CollapsableSection, Cascader, CascaderOption, Select, ActionMeta } from '@grafana/ui';
+import { Button, Card, InlineField, Input, CollapsableSection, Select, ActionMeta } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ODLDataSourceOptions, ODLQuery } from '../types';
@@ -68,7 +68,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   }
 
   const { uri, loopPath, columns } = query;
-  const conversionOptions:SelectableValue[] = [{label: 'Integer to IP', value: 'int2ip'}, {label: 'None', value: 'none'}]
+  const conversionOptions: SelectableValue[] = [{label: 'Integer to IP', value: 'int2ip'}, {label: 'None', value: 'none'}]
 
   return (
     <div>
@@ -97,7 +97,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
               <InlineField labelWidth={18} label='Conversion' tooltip={'Conversion function to apply to the value. If a regex is supplied, the regex is applied first then the conviersion function.'}>
                 <Select onChange={(value: SelectableValue<string> ,action: ActionMeta) => onConverterChange(index,value, action)} 
                       width={100} 
-                      value={conversionOptions.find(value => value.value == column.converter)}
+                      value={conversionOptions.find(value => value.value === column.converter)}
                       closeMenuOnSelect={true}
                       options={conversionOptions}
                 />
