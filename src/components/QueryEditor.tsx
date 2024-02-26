@@ -68,7 +68,10 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   }
 
   const { uri, loopPath, columns } = query;
-  const conversionOptions: SelectableValue[] = [{label: 'Integer to IP', value: 'int2ip'}, {label: 'None', value: 'none'}]
+  const conversionOptions: SelectableValue[] = [{label: 'Integer to IP',  value: 'int2ip'}, 
+                                                {label: 'None',           value: 'none'},
+                                                {label: 'SUM',            value: 'sum'}
+                                              ]
 
   return (
     <div>
@@ -83,20 +86,20 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
         </InlineField>
       </Card>
       <CollapsableSection label='Columns' isOpen={true}>
-        {columns.map((column, index, columns) => 
-            <Card key={index} className='x-flex'>
+        {columns.map((column, index) => 
+            <Card key={index} >
               <InlineField labelWidth={18} label='Name' tooltip={'The name for the column where the value specified by the path will be put'}>
-                <Input onChange={(e: ChangeEvent<HTMLInputElement>) => onColumnNameChange(index,e)} width={100} value={column.name}/>
+                <Input onChange={(e: ChangeEvent<HTMLInputElement>) => onColumnNameChange(index,e)} width={200} value={column.name}/>
               </InlineField>
               <InlineField labelWidth={18} label='Path' tooltip={'Path within the JSON respons to find the value for this column'}>
-                <Input onChange={(e: ChangeEvent<HTMLInputElement>) => onColumnPathChange(index, e)} width={100} value={column.path}/>
+                <Input onChange={(e: ChangeEvent<HTMLInputElement>) => onColumnPathChange(index, e)} width={200} value={column.path}/>
               </InlineField>
               <InlineField labelWidth={18} label='Regex' tooltip={'Regular expression to apply to this column to extract the value. If empty the selected value is sent as is'}>
-                <Input onChange={(e: ChangeEvent<HTMLInputElement>) => onColumnRegexChange(index, e)} width={100} value={column.regex}/>
+                <Input onChange={(e: ChangeEvent<HTMLInputElement>) => onColumnRegexChange(index, e)} width={80} value={column.regex}/>
               </InlineField>
               <InlineField labelWidth={18} label='Conversion' tooltip={'Conversion function to apply to the value. If a regex is supplied, the regex is applied first then the conviersion function.'}>
-                <Select onChange={(value: SelectableValue<string> ,action: ActionMeta) => onConverterChange(index,value, action)} 
-                      width={100} 
+                <Select onChange={(value: SelectableValue<string>, action: ActionMeta) => onConverterChange(index,value, action)} 
+                      width={80} 
                       value={conversionOptions.find(value => value.value === column.converter)}
                       closeMenuOnSelect={true}
                       options={conversionOptions}

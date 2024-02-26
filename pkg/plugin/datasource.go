@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
+	"github.com/PaesslerAG/jsonpath"
 )
 
 // Make sure Datasource implements required interfaces. This is important to do
@@ -166,7 +168,8 @@ func (d *Datasource) GetUrl(pluginData map[string]any, uri string) string {
 }
 
 func (d *Datasource) GetValues(loopPath string, column columnType, odlResponse map[string]any) []string {
-	loopNodesAny, err := d.GetNode(loopPath, odlResponse)
+	loopNodesAny, err := jsonpath.Get(loopPath, odlResponse)
+	// loopNodesAny, err := d.GetNode(loopPath, odlResponse)
 	logger.Info(fmt.Sprintf("Looping on %s", loopPath))
 	var response []string
 	if err != nil {
@@ -177,33 +180,32 @@ func (d *Datasource) GetValues(loopPath string, column columnType, odlResponse m
 	logger.Debug(fmt.Sprintf("Casting loop nodes. ok: %s. Actual type: %T", ok, loopNodesAny))
 	if ok {
 		logger.Info(fmt.Sprintf("Casting loop list worked (%d)", len(loopNodes)))
-		var value string
-		var valueAny any
+		var value any
 		var loopNode map[string]any
 		var err1 error
 		for _, loopNodeAny := range loopNodes {
 			logger.Debug(fmt.Sprintf("Searching for column value %s", column.Path))
 			loopNode, ok = loopNodeAny.(map[string]any)
 			if ok {
-				valueAny, err1 = d.GetNode(column.Path, loopNode)
+				value, err1 = jsonpath.Get(column.Path, loopNode)
+			// 	valueAny, err1 = d.GetNode(column.Path, loopNode)
 				if err1 != nil {
 					logger.Error(err1.Error())
-					valueAny = ""
+					value = ""
 				}
-				value, ok = valueAny.(string)
+				var values []string
+				values, err = d.applyRegex(value, column.Regex)
+				if err != nil {
+					logger.Error(fmt.Sprintf("Error applying regex. %s", err.Error()))
+				}
+				value, err = d.applyConverter(values, column.Converter)
+				if err != nil {
+					logger.Error(fmt.Sprintf("Error applying converter. %s", err.Error()))
+				}
+				logger.Debug(fmt.Sprintf("Appending value %s", value))
+				valueStr, ok := value.(string)
 				if ok {
-					logger.Debug(fmt.Sprintf("Appending value %s", value))
-					value, err = d.applyRegex(value, column.Regex)
-					if err != nil {
-						logger.Error(fmt.Sprintf("Error applying regex. %s", err.Error()))
-					}
-					value, err = d.applyConverter(value, column.Converter)
-					if err != nil {
-						logger.Error(fmt.Sprintf("Error applying converter. %s", err.Error()))
-					}
-					response = append(response, value)
-				} else {
-					logger.Error(fmt.Sprintf("Value is not a string %T", valueAny))
+					response = append(response, valueStr)
 				}
 			} else {
 				logger.Error(fmt.Sprintf("Could not convert %T to map[string]any", loopNodeAny))
@@ -216,25 +218,67 @@ func (d *Datasource) GetValues(loopPath string, column columnType, odlResponse m
 	return response
 }
 
-func (d *Datasource) applyRegex(value string, columnRegex string) (string, error) {
-	logger.Info(fmt.Sprintf("Column Regex %s", columnRegex))
+func (d *Datasource) applyRegex(valueAny any, columnRegex string) ([]string, error) {
+	var valueArr []any
+	val, ok := valueAny.(string)
+	if ok {
+		valueArr = []any { val }
+	} else {
+		valueArr, ok = valueAny.([]any)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf("%s (%T) is not a string or []any", valueAny, valueAny))
+		}
+	}
+	// logger.Info(fmt.Sprintf("Column Regex %s", columnRegex))
+	var response []string
 	if (columnRegex != "") {
 		var compiledRegex = regexp.MustCompile(columnRegex)
-		match := compiledRegex.FindStringSubmatch(value)
-		logger.Info(fmt.Sprintf("Applying %s to %s generated %d matches",columnRegex, value, len(match)))
-		if (len(match) > 0) {
-			logger.Info(fmt.Sprintf("New value after regex %s",match[1]))
-			return match[1], nil
-		} else {
-			return "", errors.New(fmt.Sprintf("Regex %s did not match %s", columnRegex, value))
+		for _, valueAny := range valueArr {
+			value, ok := valueAny.(string)
+			if !ok {
+				logger.Error(fmt.Sprintf("Could not convert %T to string", valueAny))
+				continue
+			}
+			match := compiledRegex.FindStringSubmatch(value)
+			logger.Info(fmt.Sprintf("Applying %s to %s generated %d matches",columnRegex, value, len(match)))
+			if (len(match) > 0) {
+				logger.Info(fmt.Sprintf("New value after regex %s",match[1]))
+				response = append(response, match[1])
+			} else {
+				response = append(response, "")
+				logger.Error(fmt.Sprintf("Regex %s did not match %s", columnRegex, value))
+			}
 		}
+		return response, nil
 	} else {
-		return value, nil
+		for _, valAny := range valueArr {
+			val, ok := valAny.(string)
+			if ok {
+				response = append(response, val)
+			}
+		}
+		return response, nil
 	}
 }
 
-func (d *Datasource) int2Ip(valueStr string) (string, error) {
-	value, err := strconv.Atoi(valueStr)
+func (d *Datasource) sum(values []string) (string, error) {
+	accum := 0
+	for _, valueStr := range values {
+		val, err := strconv.ParseFloat(valueStr, 64)
+		if err == nil {
+			accum += int(val)
+		} else {
+			logger.Error(fmt.Sprintf("Could not convert %s to integer", valueStr))
+		}
+	}
+	return strconv.Itoa(accum), nil
+}
+
+func (d *Datasource) int2Ip(valueStr []string) (string, error) {
+	if (len(valueStr) != 1) {
+		return "", errors.New(fmt.Sprintf("int2Ip received %d values, it should have received 1", len(valueStr)))
+	}
+	value, err := strconv.Atoi(valueStr[0])
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("Error converting %s to integer", valueStr))
 	}
@@ -246,13 +290,19 @@ func (d *Datasource) int2Ip(valueStr string) (string, error) {
 	return ip, nil
 }
 
-func (d *Datasource) Identity(value string) (string, error) {
+func (d *Datasource) First(values []string) (string, error) {
+	value := values[0]
+	valueF, err := strconv.ParseFloat(value, 64)
+	if (err == nil) {
+		valueI := int(valueF)
+		value = strconv.Itoa(valueI)
+	}
 	return value, nil
 }
 
-func (d *Datasource) applyConverter(value string, converterName string) (string, error) {
-	converters := map[string]func(string)(string,error) { "int2ip" : d.int2Ip, "none": d.Identity}
-	newValue, err := converters[converterName](value)
+func (d *Datasource) applyConverter(values []string, converterName string) (string, error) {
+	converters := map[string]func([]string)(string,error) { "int2ip" : d.int2Ip, "none": d.First, "sum": d.sum}
+	newValue, err := converters[converterName](values)
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("Error applying converter: %s", err.Error()))
 	}
