@@ -180,7 +180,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
         </InlineField>
       </Card>
       <Card>
-        <InlineField label="Loop Path" labelWidth={18} tooltip="Path within the API response that renders each row.">
+        <InlineField label="Loop Path" labelWidth={18} tooltip="JSONPath within the API response that renders each row.">
           <Input onChange={onLoopPathChange} width={100} value={loopPath || 'network-topology:network-topology/topology[0]/link'} />
         </InlineField>
       </Card>
@@ -191,7 +191,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
               <InlineField labelWidth={18} label='Name' tooltip={'The name for the column where the value specified by the path will be put'}>
                 <Input onChange={(e: ChangeEvent<HTMLInputElement>) => onColumnNameChange(index,e)} width={100} value={column.name}/>
               </InlineField>
-              <InlineField labelWidth={18} label='Path' tooltip={'Path within the JSON respons to find the value for this column'}>
+              <InlineField labelWidth={18} label='Path' tooltip={'JSONPath within the JSON respons to find the value for this column'}>
                 <Input onChange={(e: ChangeEvent<HTMLInputElement>) => onColumnPathChange(index, e)} width={100} value={column.path}/>
               </InlineField>
               <InlineFieldRow>
@@ -217,7 +217,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
         <Button onClick={addColumn}>+ Column</Button>
         <Button onClick={deleteColumn}>- Column</Button>
       </CollapsableSection>
-      <CollapsableSection label='Filters' isOpen={false}>
+      <CollapsableSection label='Filters' isOpen={true}>
           {
           filters.map((filter,index) =>
             <Card key={index}>

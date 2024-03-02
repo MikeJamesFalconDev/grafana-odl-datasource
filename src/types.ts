@@ -26,21 +26,21 @@ export interface ODLQuery extends DataQuery {
 
 export const DEFAULT_QUERY: Partial<ODLQuery> = {
   uri: '/rests/data/network-topology:network-topology',
-  loopPath: 'network-topology:network-topology/topology[0]/link',
+  loopPath: '$["network-topology:network-topology"]["topology"][0]["link"]',
   columns: 
   [
     {
       name:             'source',
-      path:             'source/source-node',
-      regex:            '.*router=(\d+).*/$1',
+      path:             '$["source"]["source-node"]',
+      regex:            'router=(\\d+)',
       regexEnabled:     true,
       converter:        'int2ip',
       converterEnabled: true,
     },
     {
       name:             'target',
-      path:             'destination/dest-node',
-      regex:            '.*router=(\d+).*/$1',
+      path:             '$["destination"]["dest-node"]',
+      regex:            'router=(\\d+)',
       regexEnabled:     true,
       converter:        'int2ip',
       converterEnabled: true,
@@ -49,10 +49,10 @@ export const DEFAULT_QUERY: Partial<ODLQuery> = {
   filters:
   [
     {
-      field:      '',
-      when:       '',
-      operation:  '',
-      value:      '',
+      field:      'source',
+      when:       'raw',
+      operation:  '!regexMatch',
+      value:      '\\d+:\\d+',
     }
   ]
 };
@@ -70,7 +70,7 @@ export const filterOptions: SelectableValue[] =     [{label: 'Equals',          
                                                      {label: 'Less than',        value: 'lt'},
                                                      {label: 'Not equals',       value: '!equals'},
                                                      {label: 'Regex match',      value: 'regexMatch'},
-                                                     {label: 'Regex not match',  value: 'regexNotMatch'},
+                                                     {label: 'Regex not match',  value: '!regexMatch'},
                                                     ];
 
 

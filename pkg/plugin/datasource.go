@@ -189,7 +189,7 @@ var filterMapping = map[string]func([]string, filterType) (bool, error){
 	"gt":            GreaterThan,
 	"lt":            LessThan,
 	"regexMatch":    RegexMatch,
-	"regexNotMatch": NotRegexMatch,
+	"!regexMatch":   NotRegexMatch,
 }
 
 //_______________________________________________________________________________________________________
@@ -255,7 +255,9 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	var err2 error
 	values := d.GetData(queryData, odlResponse, &err2)
 	if err2 != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Error generating response data %v", err.Error()))
+		msg := fmt.Sprintf("Error generating response data %v", err2.Error())
+		logger.Error(msg)
+		return backend.ErrDataResponse(backend.StatusBadRequest, msg)
 	}
 
 	logger.Info(fmt.Sprintf("query: values size %d", len(values)))
@@ -392,7 +394,11 @@ func (d *Datasource) GetData(query queryModel, odlResponse map[string]any, err *
 func (d *Datasource) Filter(values []string, filters []filterType) (bool, error) {
 	for _, filter := range filters {
 		logger.Debug(fmt.Sprintf("Applying filter %s on %s", filter, values))
-		accept, err := filterMapping[filter.Operation](values, filter)
+		filterFunc , ok := filterMapping[filter.Operation]
+		if !ok {
+			return false, errors.New(fmt.Sprintf("Invalid filter type %s", filter.Operation))
+		}
+		accept, err := filterFunc(values, filter)
 		if err != nil {
 			return false, errors.New(fmt.Sprintf("Error filtering value %s with filter filter %s. %v", values, filter, err.Error()))
 		}
