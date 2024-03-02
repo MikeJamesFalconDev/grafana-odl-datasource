@@ -1,17 +1,27 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData, SelectableValue } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 export interface ColumnType {
-    name:       string;
-    path:       string;
-    regex:      string;
-    converter:  string;
+  name:             string;
+  path:             string;
+  regex:            string;
+  regexEnabled:     boolean;
+  converter:        string;
+  converterEnabled: boolean;
+}
+
+export interface FilterType {
+  field:            string;
+  when:             string;
+  operation:        string;
+  value:            string;
 }
 
 export interface ODLQuery extends DataQuery {
-  uri: string;
-  loopPath: string;
-  columns: ColumnType[];
+  uri:              string;
+  loopPath:         string;
+  columns:          ColumnType[];
+  filters:          FilterType[];
 }
 
 export const DEFAULT_QUERY: Partial<ODLQuery> = {
@@ -20,19 +30,49 @@ export const DEFAULT_QUERY: Partial<ODLQuery> = {
   columns: 
   [
     {
-      name:       'source',
-      path:       'source/source-node',
-      regex:      '.*router=(\d+).*/$1',
-      converter:  'int2ip',
+      name:             'source',
+      path:             'source/source-node',
+      regex:            '.*router=(\d+).*/$1',
+      regexEnabled:     true,
+      converter:        'int2ip',
+      converterEnabled: true,
     },
     {
-      name:       'target',
-      path:       'destination/dest-node',
-      regex:      '.*router=(\d+).*/$1',
-      converter:  'int2ip',
+      name:             'target',
+      path:             'destination/dest-node',
+      regex:            '.*router=(\d+).*/$1',
+      regexEnabled:     true,
+      converter:        'int2ip',
+      converterEnabled: true,
     },
   ],
+  filters:
+  [
+    {
+      field:      '',
+      when:       '',
+      operation:  '',
+      value:      '',
+    }
+  ]
 };
+
+export const conversionOptions: SelectableValue[] = [{label: 'Integer to IP',    value: 'int2ip'}, 
+                                                     {label: 'None',             value: 'none'},
+                                                     {label: 'SUM',              value: 'sum'}
+                                                    ]
+export const whenOptions: SelectableValue[] =       [{label: 'Raw value',        value: 'raw'},
+                                                     {label: 'After regex',      value: 'regex'},
+                                                     {label: 'After conversion', value: 'conversion'}
+                                                      ];
+export const filterOptions: SelectableValue[] =     [{label: 'Equals',           value: 'equals'},
+                                                     {label: 'Greater than',     value: 'gt'},
+                                                     {label: 'Less than',        value: 'lt'},
+                                                     {label: 'Not equals',       value: '!equals'},
+                                                     {label: 'Regex match',      value: 'regexMatch'},
+                                                     {label: 'Regex not match',  value: 'regexNotMatch'},
+                                                    ];
+
 
 /**
  * These are options configured for each DataSource instance
