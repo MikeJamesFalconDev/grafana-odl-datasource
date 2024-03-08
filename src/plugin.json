@@ -21,6 +21,16 @@
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
+  "logos": {
+    "large": "img/logo.svg",
+    "small": "img/logo.svg"
+  },
+   "screenshots": [
+    {
+      "name": "Query",
+      "path": "img/Odl-datasource-screenshot.png"
+    }
+  ],
   "dependencies": {
     "grafanaDependency": ">=10.3.3",
     "plugins": []
