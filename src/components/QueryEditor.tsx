@@ -85,11 +85,13 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   };
 
   const onConverterEnabledChange = (index: number) => {
-    console.log(query.columns[index].path)
-    query.columns[index].converterEnabled = !query.columns[index].converterEnabled
-    onChange(query);
-   // executes the query
-   onRunQuery();
+    if (index in query.columns) {
+      console.log(query.columns[index].path)
+      query.columns[index].converterEnabled = !query.columns[index].converterEnabled
+      onChange(query);
+    // executes the query
+      onRunQuery();
+    }
   };
 
   const addColumn = () => {
@@ -162,8 +164,11 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   if (!query.filters ) {
     query.filters = [{ field: '', when:'', operation: '', value: '' }]
   }
-  const { uri, loopPath, columns, filters } = query;
+  let { uri, loopPath, columns, filters } = query;
   
+  if (!columns ) {
+    columns = []
+  }
 
   return (
     <div
