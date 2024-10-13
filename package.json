@@ -1,6 +1,6 @@
 {
   "name": "odl-datasource",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Use opendaylight orchestrator as a datasource",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
