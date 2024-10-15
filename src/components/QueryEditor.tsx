@@ -166,10 +166,6 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   }
   let { uri, loopPath, columns, filters } = query;
   
-  if (!columns ) {
-    columns = []
-  }
-
   return (
     <div
     className={cx(
