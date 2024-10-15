@@ -383,7 +383,7 @@ func (d *Datasource) GetData(query queryModel, odlResponse map[string]any, err *
 			}
 		}
 	} else {
-		*err = errors.New(fmt.Sprintf("Error casting jsonpath response %s of type %T to []any. %v", loopNodesAny, loopNodesAny))
+		*err = errors.New(fmt.Sprintf("Error casting jsonpath response %s of type %T to []any.", loopNodesAny, loopNodesAny))
 		return nil
 	}
 
